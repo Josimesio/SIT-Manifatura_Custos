@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login | Missão Cenários Concluídos Agrosys - SIT </title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Baloo+2:wght@700;800&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg: #0b1020;
+      --card: #121a35;
+      --line: rgba(255,255,255,.09);
+      --text: #edf2ff;
+      --muted: #aab8df;
+      --accent: #7c5cff;
+      --accent-2: #14d3a6;
+      --danger: #ff6b7a;
+      --shadow: 0 24px 70px rgba(0,0,0,.35);
+      --radius: 24px;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      font-family: 'Inter', system-ui, sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(124,92,255,.22), transparent 25%),
+        radial-gradient(circle at top right, rgba(20,211,166,.16), transparent 30%),
+        linear-gradient(180deg, #0a1021 0%, #0d1430 100%);
+      color: var(--text);
+    }
+
+    body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      overflow-x: hidden;
+    }
+
+    .bg-grid {
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.03) 1px, transparent 1px);
+      background-size: 32px 32px;
+      mask-image: linear-gradient(180deg, rgba(0,0,0,.7), transparent 90%);
+      pointer-events: none;
+    }
+
+    .bg-orb {
+      position: fixed;
+      width: 440px;
+      height: 440px;
+      border-radius: 50%;
+      filter: blur(75px);
+      opacity: .28;
+      pointer-events: none;
+    }
+
+    .orb-1 { background: #7c5cff; top: -120px; left: -90px; }
+    .orb-2 { background: #14d3a6; right: -120px; top: 220px; }
+
+    .login-shell {
+      width: min(1100px, 100%);
+      min-height: 640px;
+      display: grid;
+      grid-template-columns: 1.15fr .85fr;
+      background: rgba(17, 24, 48, 0.88);
+      border: 1px solid var(--line);
+      border-radius: 28px;
+      overflow: hidden;
+      box-shadow: var(--shadow);
+      position: relative;
+      z-index: 1;
+    }
+
+    .login-left {
+      padding: 42px;
+      background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.03));
+      backdrop-filter: blur(14px);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .eyebrow {
+      text-transform: uppercase;
+      letter-spacing: .14em;
+      font-size: .72rem;
+      color: #8ea0d7;
+      margin: 0 0 8px;
+      font-weight: 700;
+    }
+
+    .login-left h1 {
+      margin: 0;
+      font-family: 'Baloo 2', cursive;
+      font-size: clamp(2.2rem, 4vw, 4rem);
+      line-height: .95;
+    }
+
+    .login-left h1 span {
+      color: #fff5a6;
+      text-shadow: 0 0 20px rgba(255,245,166,.28);
+    }
+
+    .hero-text {
+      max-width: 680px;
+      color: var(--muted);
+      font-size: 1.04rem;
+      margin-top: 14px;
+      line-height: 1.6;
+    }
+
+    .info-box {
+      margin-top: 22px;
+      padding: 18px 20px;
+      border-radius: 22px;
+      background: rgba(255,255,255,.05);
+      border: 1px solid rgba(255,255,255,.08);
+      display: grid;
+      gap: 6px;
+      max-width: 620px;
+    }
+
+    .info-box strong {
+      color: #fff5a6;
+      font-size: 1.05rem;
+    }
+
+    .info-box small {
+      color: #b6c2e8;
+      font-size: .92rem;
+    }
+
+    .login-right {
+      background: #f4f6fb;
+      color: #1d2852;
+      padding: 42px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .login-right h2 {
+      margin: 0 0 10px;
+      font-size: 2.6rem;
+      line-height: 1;
+      font-weight: 800;
+      color: #1d2852;
+    }
+
+    .login-subtitle {
+      color: #5e6f86;
+      margin-bottom: 28px;
+      font-size: .98rem;
+      line-height: 1.5;
+    }
+
+    .form-label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 800;
+      font-size: .98rem;
+      color: #0c2440;
+    }
+
+    .form-control {
+      width: 100%;
+      height: 58px;
+      border-radius: 16px;
+      border: 1px solid #d5dde7;
+      background: #dfe7f2;
+      font-size: 1rem;
+      padding: 0 18px;
+      outline: none;
+      margin-bottom: 20px;
+    }
+
+    .form-control:focus {
+      border-color: #7c5cff;
+      box-shadow: 0 0 0 4px rgba(124,92,255,.12);
+    }
+
+    .btn-login {
+      width: 100%;
+      height: 58px;
+      border: none;
+      border-radius: 16px;
+      background: linear-gradient(90deg, #7c5cff, #14d3a6);
+      color: white;
+      font-size: 1rem;
+      font-weight: 800;
+      cursor: pointer;
+      box-shadow: 0 14px 28px rgba(124,92,255,.18);
+    }
+
+    .btn-login:hover {
+      filter: brightness(1.05);
+    }
+
+    #erro {
+      color: var(--danger);
+      font-weight: 700;
+      min-height: 24px;
+      margin-top: 14px;
+      text-align: center;
+    }
+
+    .login-foot {
+      margin-top: 20px;
+      color: #6d7b91;
+      text-align: center;
+      font-size: .9rem;
+    }
+
+    @media (max-width: 960px) {
+      .login-shell {
+        grid-template-columns: 1fr;
+      }
+
+      .login-left, .login-right {
+        padding: 28px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="bg-orb orb-1"></div>
+  <div class="bg-orb orb-2"></div>
+  <div class="bg-grid"></div>
+
+  <main class="login-shell">
+    <section class="login-left">
+      <p class="eyebrow">Painel motivacional de execução</p>
+      <h1>🏁 Missão <span>Cenários Concluídos Agrosys - SIT</span></h1>
+      <p class="hero-text">
+        Bora transformar entrega em jogo sério. Cada cenário concluído empurra o time para o topo,
+        acende o ranking e deixa claro quem está puxando a fila.
+      </p>
+
+      <div class="info-box">
+        <strong>Acesso controlado</strong>
+        <small>Informe usuário e senha para entrar no painel principal.</small>
+      </div>
+    </section>
+
+    <section class="login-right">
+      <h2>Entrar</h2>
+      <div class="login-subtitle">
+        Digite suas credenciais para acessar o painel.
+      </div>
+
+      <form id="formLogin" autocomplete="off">
+        <label for="user" class="form-label">Usuário</label>
+        <input
+          id="user"
+          name="login_usuario_manual"
+          type="text"
+          class="form-control"
+          autocomplete="off"
+          autocapitalize="off"
+          autocorrect="off"
+          spellcheck="false"
+          value=""
+        >
+
+        <label for="pass" class="form-label">Senha</label>
+        <input
+          id="pass"
+          name="login_senha_manual"
+          type="password"
+          class="form-control"
+          autocomplete="new-password"
+          autocapitalize="off"
+          autocorrect="off"
+          spellcheck="false"
+          value=""
+        >
+
+        <button type="submit" class="btn-login">Entrar no painel</button>
+        <div id="erro"></div>
+      </form>
+
+      <div class="login-foot">
+        O login deve ser digitado manualmente.
+      </div>
+    </section>
+  </main>
+
+  <script src="auth.js"></script>
+  <script>
+    limparSessao();
+
+    window.addEventListener("load", function () {
+      const campoUser = document.getElementById("user");
+      const campoPass = document.getElementById("pass");
+
+      campoUser.value = "";
+      campoPass.value = "";
+
+      setTimeout(function () {
+        campoUser.value = "";
+        campoPass.value = "";
+        campoUser.focus();
+      }, 50);
+    });
+
+    document.getElementById("formLogin").addEventListener("submit", function (e) {
+      e.preventDefault();
+
+      const u = document.getElementById("user").value.trim();
+      const p = document.getElementById("pass").value.trim();
+      const erro = document.getElementById("erro");
+
+      const resultado = fazerLogin(u, p);
+
+      if (resultado.sucesso) {
+        window.location.href = "index.html";
+        return;
+      }
+
+      if (resultado.erro === "usuario") {
+        erro.innerText = "Usuário não encontrado";
+        document.getElementById("user").focus();
+      } else if (resultado.erro === "senha") {
+        erro.innerText = "Senha incorreta";
+        document.getElementById("pass").value = "";
+        document.getElementById("pass").focus();
+      } else {
+        erro.innerText = "Falha no login";
+      }
+    });
+  </script>
+</body>
+</html>

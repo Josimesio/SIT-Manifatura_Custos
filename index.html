@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Missão Cenários Concluídos</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Baloo+2:wght@700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
+
+  <script src="auth.js"></script>
+  <script>
+    protegerPagina("login.html");
+  </script>
+</head>
+<body>
+  <div class="bg-orb orb-1"></div>
+  <div class="bg-orb orb-2"></div>
+  <div class="bg-grid"></div>
+
+  <button class="logout-floating" onclick="fazerLogout()">Sair</button>
+
+  <main class="app-shell">
+    <header class="hero card glass">
+      <div class="hero-copy">
+        <p class="eyebrow">Painel motivacional de execução</p>
+        <h1>🏁 Missão <span>Cenários Concluídos</span></h1>
+        <p class="hero-text">
+          Bora transformar entrega em jogo sério. Cada cenário concluído empurra o time para o topo,
+          acende o ranking e deixa claro quem está puxando a fila. Meta: sair do “quase” e entrar no “feito”.
+        </p>
+
+        <div class="data-update-box">
+          <span class="data-update-label">Última atualização do arquivo</span>
+          <strong id="dataAtualizacao">Aguardando leitura do CSV...</strong>
+          <small>Mostrando a coluna <strong>Gerado em</strong> do arquivo processado em Python.</small>
+        </div>
+      </div>
+
+      <div class="hero-scoreboard">
+        <div class="score-badge">
+          <span class="score-label">Clima da corrida</span>
+          <strong id="motivationalTag">Aquecendo os motores</strong>
+        </div>
+        <div class="score-ring-wrap">
+          <div class="score-ring">
+            <svg viewBox="0 0 120 120">
+              <circle cx="60" cy="60" r="48" class="ring-bg"></circle>
+              <circle cx="60" cy="60" r="48" class="ring-progress" id="ringProgress"></circle>
+            </svg>
+            <div class="ring-center">
+              <strong id="globalPercent">0%</strong>
+              <span>concluído</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <section class="summary-grid">
+      <article class="mini-card card">
+        <span class="mini-label">Total de cenários</span>
+        <strong id="totalCenarios">0</strong>
+        <small>o campo de batalha completo</small>
+      </article>
+      <article class="mini-card card">
+        <span class="mini-label">Concluídos</span>
+        <strong id="totalConcluidos">0</strong>
+        <small>o que já virou entrega real</small>
+      </article>
+      <article class="mini-card card">
+        <span class="mini-label">Em progresso</span>
+        <strong id="totalEmAndamento">0</strong>
+        <small>o pessoal que está no gás</small>
+      </article>
+      <article class="mini-card card">
+        <span class="mini-label">Não iniciados</span>
+        <strong id="totalNaoIniciado">0</strong>
+        <small>onde mora a oportunidade</small>
+      </article>
+    </section>
+
+    <section class="motivation-banner card gradient">
+      <div>
+        <p class="eyebrow">Recado do painel</p>
+        <h2 id="headlineCallout">Carregue o CSV e vamos descobrir quem está liderando a corrida.</h2>
+      </div>
+      <div class="banner-pill" id="headlinePill">Valendo pódio</div>
+    </section>
+
+    <section class="dashboard-grid">
+      <article class="card section-card leaderboard-card">
+        <div class="section-title-wrap">
+          <div>
+            <p class="eyebrow">Ranking</p>
+            <h3>🏆 Líderes do cenário</h3>
+          </div>
+          <span class="section-hint">mais concluídos primeiro</span>
+        </div>
+        <div id="leaderboard" class="leaderboard-list empty-state">
+          Carregue um CSV para montar o ranking.
+        </div>
+      </article>
+
+      <article class="card section-card">
+        <div class="section-title-wrap">
+          <div>
+            <p class="eyebrow">Distribuição</p>
+            <h3>📌 Status geral</h3>
+          </div>
+        </div>
+        <div id="statusBars" class="status-bars empty-state">
+          Aguardando dados.
+        </div>
+      </article>
+
+      <article class="card section-card wide">
+        <div class="section-title-wrap">
+          <div>
+            <p class="eyebrow">Frente de batalha</p>
+            <h3>⚔️ Áreas em competição</h3>
+          </div>
+          <span class="section-hint">mais eficiência, mais moral</span>
+        </div>
+        <div id="areaBoard" class="area-board empty-state">
+          Sem dados carregados ainda.
+        </div>
+      </article>
+
+      <article class="card section-card wide">
+        <div class="section-title-wrap">
+          <div>
+            <p class="eyebrow">Radar</p>
+            <h3>🔥 Top 10 para destravar agora</h3>
+          </div>
+          <span class="section-hint">priorize o que move o ponteiro</span>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Identificador</th>
+                <th>Cenário</th>
+                <th>Líder</th>
+                <th>Área</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="focusTable">
+              <tr><td colspan="5" class="empty-cell">Nada carregado ainda.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </article>
+    </section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
