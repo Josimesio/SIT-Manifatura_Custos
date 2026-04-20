@@ -17,7 +17,7 @@ GTN_PASS = os.getenv("GTN_PASS")
 
 LIDERES_FILTRO = os.getenv(
     "GTN_LIDERES",
-    "Marco Uliano,Paulo Pacheco"
+    "Marco Uliano, Paulo Pacheco"
 )
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -42,6 +42,7 @@ def log(msg: str) -> None:
 
 def validar_env() -> None:
     faltando = []
+
     if not GTN_USER:
         faltando.append("GTN_USER")
     if not GTN_PASS:
@@ -49,6 +50,18 @@ def validar_env() -> None:
 
     if faltando:
         raise ValueError(f"Variáveis ausentes no .env: {', '.join(faltando)}")
+
+    log("✅ Variáveis de ambiente validadas com sucesso.")
+
+
+def limpar_downloads_antigos() -> None:
+    try:
+        for arquivo in DOWNLOAD_DIR.glob("*"):
+            if arquivo.is_file():
+                arquivo.unlink(missing_ok=True)
+        log("🧹 Downloads antigos removidos.")
+    except Exception as e:
+        log(f"⚠️ Não consegui limpar downloads antigos: {e}")
 
 
 def salvar_debug(page, nome_base: str) -> None:
@@ -63,6 +76,53 @@ def salvar_debug(page, nome_base: str) -> None:
         log(f"📝 HTML salvo em: {html_path}")
     except Exception as e:
         log(f"⚠️ Falha ao salvar debug: {e}")
+
+
+def esperar_arquivo_estavel(arquivo: Path, tentativas: int = 20, intervalo: float = 1.0) -> None:
+    """
+    Espera o arquivo existir, ter tamanho > 0 e parar de crescer.
+    """
+    ultimo_tamanho = -1
+
+    for tentativa in range(1, tentativas + 1):
+        if arquivo.exists():
+            tamanho_atual = arquivo.stat().st_size
+            log(f"📦 Tentativa {tentativa}/{tentativas} - tamanho atual do arquivo: {tamanho_atual} bytes")
+
+            if tamanho_atual > 0 and tamanho_atual == ultimo_tamanho:
+                log("✅ Arquivo estabilizado.")
+                return
+
+            ultimo_tamanho = tamanho_atual
+
+        time.sleep(intervalo)
+
+    raise RuntimeError(f"Arquivo não estabilizou corretamente: {arquivo}")
+
+
+def validar_arquivo_csv_bruto(arquivo: Path) -> None:
+    if not arquivo.exists():
+        raise FileNotFoundError(f"Arquivo CSV não encontrado: {arquivo}")
+
+    tamanho = arquivo.stat().st_size
+    log(f"📏 Tamanho do arquivo baixado: {tamanho} bytes")
+
+    if tamanho == 0:
+        raise ValueError(f"O arquivo baixado está vazio: {arquivo}")
+
+    conteudo = arquivo.read_text(encoding="utf-8", errors="ignore").strip()
+
+    if not conteudo:
+        raise ValueError(f"O arquivo baixado não possui conteúdo legível: {arquivo}")
+
+    linhas = [linha for linha in conteudo.splitlines() if linha.strip()]
+    log(f"📄 Quantidade de linhas brutas no arquivo: {len(linhas)}")
+
+    if len(linhas) <= 1:
+        raise ValueError(
+            "O CSV foi baixado, mas veio sem dados úteis "
+            "(apenas cabeçalho ou conteúdo insuficiente)."
+        )
 
 
 def fazer_login(page) -> None:
@@ -161,6 +221,9 @@ def exportar_csv(page) -> Path:
     download.save_as(str(destino))
     log(f"✅ CSV salvo em: {destino}")
 
+    esperar_arquivo_estavel(destino)
+    validar_arquivo_csv_bruto(destino)
+
     try:
         page.get_by_role("button", name="Fechar").click(timeout=3000)
         log("🪟 Janela de download fechada.")
@@ -170,9 +233,7 @@ def exportar_csv(page) -> Path:
     return destino
 
 
-def tratar_csv_para_dashboard(arquivo_entrada: Path) -> Path:
-    log("🧹 Tratando CSV para o dashboard...")
-
+def ler_csv_com_tentativas(arquivo_entrada: Path) -> pd.DataFrame:
     tentativas = [
         {"sep": ";", "encoding": "latin1"},
         {"sep": ";", "encoding": "utf-8-sig"},
@@ -181,7 +242,6 @@ def tratar_csv_para_dashboard(arquivo_entrada: Path) -> Path:
     ]
 
     ultimo_erro = None
-    df = None
 
     for tentativa in tentativas:
         try:
@@ -190,16 +250,47 @@ def tratar_csv_para_dashboard(arquivo_entrada: Path) -> Path:
                 sep=tentativa["sep"],
                 encoding=tentativa["encoding"]
             )
+
             log(
                 f"✅ CSV lido com sep='{tentativa['sep']}' "
                 f"e encoding='{tentativa['encoding']}'"
             )
-            break
+
+            log(f"📊 Linhas lidas: {len(df)}")
+            log(f"🧱 Colunas lidas: {list(df.columns)}")
+
+            return df
+
         except Exception as e:
             ultimo_erro = e
+            log(
+                f"⚠️ Falha ao ler CSV com sep='{tentativa['sep']}' "
+                f"e encoding='{tentativa['encoding']}': {e}"
+            )
+
+    raise RuntimeError(f"Não consegui ler o CSV baixado. Último erro: {ultimo_erro}")
+
+
+def tratar_csv_para_dashboard(arquivo_entrada: Path) -> Path:
+    log("🧹 Tratando CSV para o dashboard...")
+
+    validar_arquivo_csv_bruto(arquivo_entrada)
+    df = ler_csv_com_tentativas(arquivo_entrada)
 
     if df is None:
-        raise RuntimeError(f"Não consegui ler o CSV baixado. Último erro: {ultimo_erro}")
+        raise RuntimeError("O DataFrame não foi gerado.")
+
+    if df.empty:
+        raise ValueError(
+            "O CSV foi lido, porém o DataFrame ficou vazio. "
+            "Provável causa: filtro sem dados ou exportação incompleta."
+        )
+
+    # Remove colunas totalmente vazias, se existirem
+    df = df.dropna(axis=1, how="all")
+
+    if df.empty:
+        raise ValueError("Depois da limpeza, o DataFrame ficou vazio.")
 
     gerado_em = datetime.now().strftime("%Y-%m-%d %H:%M")
     df["Gerado em"] = gerado_em
@@ -207,10 +298,15 @@ def tratar_csv_para_dashboard(arquivo_entrada: Path) -> Path:
     arquivo_saida = DASHBOARD_DIR / "Cenarios_Consolidados_atualizado.csv"
     df.to_csv(arquivo_saida, sep=";", index=False, encoding="utf-8-sig")
 
+    if not arquivo_saida.exists():
+        raise FileNotFoundError(f"Arquivo final não foi criado: {arquivo_saida}")
+
+    if arquivo_saida.stat().st_size == 0:
+        raise ValueError(f"Arquivo final foi criado, mas ficou vazio: {arquivo_saida}")
+
     log(f"✅ Arquivo final gerado: {arquivo_saida}")
     log(f"🕒 Coluna 'Gerado em' preenchida com: {gerado_em}")
-
-    log("⏳ Download concluído e CSV tratado com sucesso. Prosseguindo com envio ao Git...")
+    log(f"📦 Tamanho do arquivo final: {arquivo_saida.stat().st_size} bytes")
 
     return arquivo_saida
 
@@ -258,6 +354,7 @@ def commitar_e_enviar_arquivo(repo_dir: Path, arquivo: Path) -> None:
 
 def executar_fluxo() -> None:
     validar_env()
+    limpar_downloads_antigos()
 
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=False)
